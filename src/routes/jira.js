@@ -20,8 +20,11 @@ router.post("/jira", async (req, res) => {
 
         // Payload incompleto: reconhece (200) e ignora, para o Jira não reenviar.
         if (!issue?.key || !transition?.to) {
+            console.warn("Payload sem issue.key/transition.to:", JSON.stringify(req.body));
             return res.sendStatus(200);
         }
+
+        console.log(`Transição recebida: ${issue.key} "${transition.from}" → "${transition.to}"`);
 
         const mensagem = montarMensagem({ issue, transition, url });
 
@@ -30,12 +33,17 @@ router.post("/jira", async (req, res) => {
         // notificação assim que o Telegram voltasse.
         res.sendStatus(200);
 
-        if (mensagem) {
-            try {
-                await enviarMensagem(mensagem);
-            } catch (err) {
-                console.error("Falha ao enviar mensagem no Telegram:", err.message);
-            }
+        if (!mensagem) {
+            console.log(`Sem notificação para "${transition.from}" → "${transition.to}" (transição fora do mapa).`);
+            return;
+        }
+
+        try {
+            await enviarMensagem(mensagem);
+            console.log(`Mensagem enviada ao Telegram para ${issue.key}.`);
+        } catch (err) {
+            // err.response.data traz o erro da API do Telegram (ex.: chat not found).
+            console.error("Falha ao enviar ao Telegram:", err.response?.data || err.message);
         }
     } catch (e) {
         console.error("Erro ao processar webhook do Jira:", e);

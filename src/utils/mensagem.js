@@ -1,17 +1,17 @@
-const { TRANSICOES, DEFAULT } = require("../config/transitions");
+const { emojiDoStatus } = require("../config/status");
 
 // Monta a mensagem do Telegram a partir do payload da Automation do Jira.
-// Se a transição não estiver mapeada, usa o layout padrão (DEFAULT).
-function montarMensagem({ issue, transition, url }) {
-    const config = TRANSICOES[`${transition.from}|${transition.to}`] || DEFAULT;
+// Formato:
+//   Item KEY: Summary mudou de status:
+//
+//   {emoji} {status de destino}
+function montarMensagem({ issue, transition }) {
+    const status = transition.to;
+    const emoji = emojiDoStatus(status);
 
-    return `${config.emoji} ${issue.key}
+    return `Item ${issue.key}: ${issue.summary} mudou de status:
 
-${issue.summary}
-
-${config.rodape(transition)}
-
-🔗 ${url}`;
+${emoji} ${status}`;
 }
 
 module.exports = { montarMensagem };

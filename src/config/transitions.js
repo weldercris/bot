@@ -26,7 +26,7 @@ const TRANSICOES = {
 // qualquer transição recebida — em vez de descartar em silêncio.
 const DEFAULT = {
     emoji: "🔔",
-    rodape: ({ from, to }) => `➡️ ${from} → ${to}`
+    rodape: ({ from, to }) => (from ? `➡️ ${from} → ${to}` : `➡️ ${to}`)
 };
 
 module.exports = { TRANSICOES, DEFAULT };

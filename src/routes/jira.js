@@ -16,15 +16,24 @@ router.post("/jira", async (req, res) => {
     }
 
     try {
-        const { issue, transition, url } = req.body || {};
+        const { issue, url } = req.body || {};
+        const recebida = req.body?.transition || {};
 
-        // Payload incompleto: reconhece (200) e ignora, para o Jira não reenviar.
-        if (!issue?.key || !transition?.to) {
-            console.warn("Payload sem issue.key/transition.to:", JSON.stringify(req.body));
+        // Alguns gatilhos do Jira (ex.: Product Discovery) não preenchem
+        // fieldChange.fromString/toString. Nesse caso, usamos issue.status
+        // (status de destino), que vem confiável, como fallback do "to".
+        const to = recebida.to || issue?.status;
+        const from = recebida.from || "";
+        const transition = { from, to };
+
+        // Sem o mínimo (chave + status de destino): reconhece (200) e ignora,
+        // para o Jira não reenviar o webhook.
+        if (!issue?.key || !to) {
+            console.warn("Payload sem issue.key/status:", JSON.stringify(req.body));
             return res.sendStatus(200);
         }
 
-        console.log(`Transição recebida: ${issue.key} "${transition.from}" → "${transition.to}"`);
+        console.log(`Transição recebida: ${issue.key} "${from}" → "${to}"`);
 
         const mensagem = montarMensagem({ issue, transition, url });
 

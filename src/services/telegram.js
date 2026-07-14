@@ -12,9 +12,16 @@ const client = axios.create({
 // Erros de resposta da API (4xx, ex.: "chat not found") NÃO são repetidos,
 // pois retry não resolve — são relançados na hora.
 async function enviarMensagem(texto, tentativas = 3) {
+    // parse_mode HTML habilita negrito/link na mensagem (ver utils/mensagem.js);
+    // disable_web_page_preview evita o card gigante de preview do link do Jira.
+    const payload = {
+        chat_id: chatId,
+        text: texto,
+        parse_mode: "HTML",
+        disable_web_page_preview: true
+    };
     // Em grupos com Tópicos ativados, message_thread_id direciona a mensagem
     // para um tópico específico. Sem ele, cai no tópico "General".
-    const payload = { chat_id: chatId, text: texto };
     if (messageThreadId) {
         payload.message_thread_id = Number(messageThreadId);
     }

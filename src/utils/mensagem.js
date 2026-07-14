@@ -1,41 +1,46 @@
-// Monta a mensagem do Telegram a partir do payload da Automation do Jira.
-// Formato:
-//   🔄 Status atualizado
+const { emojiDoStatus } = require("../config/status");
+
+// Escapa os caracteres que o parse_mode HTML do Telegram interpreta,
+// para que summary/responsável com "<", ">" ou "&" não quebrem a mensagem.
+function escapeHtml(texto) {
+    return String(texto)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+// Monta a mensagem (HTML) do Telegram a partir do payload da Automation do Jira.
+// A hierarquia vem do negrito, não de rótulos, para uma leitura mais limpa:
+//   {emoji} {origem → destino}   (negrito)
 //
-//   📌 Tarefa:
-//   {summary}
+//   {KEY} — {summary}            (KEY em negrito)
+//   👤 {responsável}             (se houver)
 //
-//   🆔 ID:
-//   {key}
-//
-//   📍 {from} → {to}
-//   (👤 Responsável, se houver)
-//
-//   🔗 {url}
+//   🔗 Abrir no Jira            (se houver url)
 function montarMensagem({ issue, transition, url }) {
-    // Só mostra o bloco do responsável quando o assignee vem preenchido.
-    const responsavel = issue.assignee
-        ? `\n\n👤 Responsável:\n${issue.assignee}`
-        : "";
+    const emoji = emojiDoStatus(transition.to);
 
-    // Alguns gatilhos do Jira não trazem o "from" (fica ""); nesse caso
-    // mostramos só o status de destino em vez de "  → Destino".
-    const transicao = transition.from
-        ? `${transition.from} → ${transition.to}`
-        : transition.to;
+    // Cabeçalho: "origem → destino" quando temos o "from"; só o destino quando
+    // o gatilho do Jira não informa a origem.
+    const titulo = transition.from
+        ? `${escapeHtml(transition.from)} → ${escapeHtml(transition.to)}`
+        : escapeHtml(transition.to);
 
-    // Evita imprimir "🔗 undefined" quando o payload não traz a URL.
-    const link = url ? `\n\n🔗 ${url}` : "";
+    const linhas = [
+        `${emoji} <b>${titulo}</b>`,
+        "",
+        `<b>${escapeHtml(issue.key)}</b> — ${escapeHtml(issue.summary)}`
+    ];
 
-    return `🔄 Status atualizado
+    if (issue.assignee) {
+        linhas.push(`👤 ${escapeHtml(issue.assignee)}`);
+    }
 
-📌 Tarefa:
-${issue.summary}
+    if (url) {
+        linhas.push("", `🔗 <a href="${escapeHtml(url)}">Abrir no Jira</a>`);
+    }
 
-🆔 ID:
-${issue.key}
-
-📍 ${transicao}${responsavel}${link}`;
+    return linhas.join("\n");
 }
 
 module.exports = { montarMensagem };

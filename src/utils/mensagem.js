@@ -1,12 +1,9 @@
-const { TRANSICOES } = require("../config/transitions");
+const { TRANSICOES, DEFAULT } = require("../config/transitions");
 
 // Monta a mensagem do Telegram a partir do payload da Automation do Jira.
-// Retorna null quando a transição não deve gerar notificação.
+// Se a transição não estiver mapeada, usa o layout padrão (DEFAULT).
 function montarMensagem({ issue, transition, url }) {
-    const config = TRANSICOES[`${transition.from}|${transition.to}`];
-    if (!config) {
-        return null;
-    }
+    const config = TRANSICOES[`${transition.from}|${transition.to}`] || DEFAULT;
 
     return `${config.emoji} ${issue.key}
 

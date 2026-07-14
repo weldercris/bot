@@ -1,17 +1,41 @@
-const { emojiDoStatus } = require("../config/status");
-
 // Monta a mensagem do Telegram a partir do payload da Automation do Jira.
 // Formato:
-//   Item KEY: Summary mudou de status:
+//   🔄 Status atualizado
 //
-//   {emoji} {status de destino}
-function montarMensagem({ issue, transition }) {
-    const status = transition.to;
-    const emoji = emojiDoStatus(status);
+//   📌 Tarefa:
+//   {summary}
+//
+//   🆔 ID:
+//   {key}
+//
+//   📍 {from} → {to}
+//   (👤 Responsável, se houver)
+//
+//   🔗 {url}
+function montarMensagem({ issue, transition, url }) {
+    // Só mostra o bloco do responsável quando o assignee vem preenchido.
+    const responsavel = issue.assignee
+        ? `\n\n👤 Responsável:\n${issue.assignee}`
+        : "";
 
-    return `Item ${issue.key}: ${issue.summary} mudou de status:
+    // Alguns gatilhos do Jira não trazem o "from" (fica ""); nesse caso
+    // mostramos só o status de destino em vez de "  → Destino".
+    const transicao = transition.from
+        ? `${transition.from} → ${transition.to}`
+        : transition.to;
 
-${emoji} ${status}`;
+    // Evita imprimir "🔗 undefined" quando o payload não traz a URL.
+    const link = url ? `\n\n🔗 ${url}` : "";
+
+    return `🔄 Status atualizado
+
+📌 Tarefa:
+${issue.summary}
+
+🆔 ID:
+${issue.key}
+
+📍 ${transicao}${responsavel}${link}`;
 }
 
 module.exports = { montarMensagem };

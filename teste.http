@@ -1,22 +1,35 @@
-### Teste da API Jira
-
+### Local (npm run dev)
 POST http://localhost:3000/jira
 Content-Type: application/json
 
 {
   "issue": {
     "key": "TASK-154",
-    "fields": {
-      "summary": "Criar integração com Telegram"
-    }
+    "summary": "Integração Telegram",
+    "assignee": "Welder",
+    "status": "Testes"
   },
-  "changelog": {
-    "items": [
-      {
-        "field": "status",
-        "fromString": "Fazendo",
-        "toString": "Testes"
-      }
-    ]
-  }
+  "transition": {
+    "from": "Fazendo",
+    "to": "Testes"
+  },
+  "url": "https://seudominio.atlassian.net/browse/TASK-154"
+}
+
+### Produção (Render)
+POST https://bot-a5mj.onrender.com/jira
+Content-Type: application/json
+
+{
+  "issue": {
+    "key": "TASK-154",
+    "summary": "Integração Telegram",
+    "assignee": "Welder",
+    "status": "Publicado"
+  },
+  "transition": {
+    "from": "Pronto para Deploy",
+    "to": "Publicado"
+  },
+  "url": "https://seudominio.atlassian.net/browse/TASK-154"
 }

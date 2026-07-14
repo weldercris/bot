@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { telegramToken, chatId } = require("../config");
+const { telegramToken, chatId, messageThreadId } = require("../config");
 
 // Instância reutilizável. Timeout generoso porque o envio roda em background
 // (o Jira já recebeu 200), então uma rede de saída lenta não prejudica ninguém.
@@ -12,12 +12,16 @@ const client = axios.create({
 // Erros de resposta da API (4xx, ex.: "chat not found") NÃO são repetidos,
 // pois retry não resolve — são relançados na hora.
 async function enviarMensagem(texto, tentativas = 3) {
+    // Em grupos com Tópicos ativados, message_thread_id direciona a mensagem
+    // para um tópico específico. Sem ele, cai no tópico "General".
+    const payload = { chat_id: chatId, text: texto };
+    if (messageThreadId) {
+        payload.message_thread_id = Number(messageThreadId);
+    }
+
     for (let i = 1; i <= tentativas; i++) {
         try {
-            await client.post("/sendMessage", {
-                chat_id: chatId,
-                text: texto
-            });
+            await client.post("/sendMessage", payload);
             return;
         } catch (err) {
             if (err.response || i === tentativas) {

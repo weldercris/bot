@@ -3,6 +3,8 @@ require("dotenv").config();
 const config = {
     telegramToken: process.env.TELEGRAM_TOKEN,
     chatId: process.env.CHAT_ID,
+    // Opcional: em grupos com Tópicos, envia no tópico indicado. Vazio = General.
+    messageThreadId: process.env.MESSAGE_THREAD_ID,
     port: process.env.PORT || 3000,
     // Opcional: se definido, o webhook exige este segredo (veja routes/jira.js).
     webhookSecret: process.env.JIRA_WEBHOOK_SECRET

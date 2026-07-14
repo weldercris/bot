@@ -25,6 +25,8 @@ if (!TOKEN) {
 
     const updates = data.result || [];
     const chats = new Map();
+    // chat.id -> Map(threadId -> nome do tópico), para grupos com Tópicos.
+    const threadsPorChat = new Map();
 
     for (const u of updates) {
         const evento =
@@ -35,6 +37,21 @@ if (!TOKEN) {
         const chat = evento?.chat;
         if (chat) {
             chats.set(chat.id, chat);
+        }
+
+        // Mensagens dentro de um tópico trazem message_thread_id. O nome do
+        // tópico só aparece quando o Telegram inclui forum_topic_created.
+        const threadId = evento?.message_thread_id;
+        if (chat && threadId) {
+            if (!threadsPorChat.has(chat.id)) {
+                threadsPorChat.set(chat.id, new Map());
+            }
+            const nomeTopico =
+                evento.forum_topic_created?.name ||
+                evento.reply_to_message?.forum_topic_created?.name ||
+                threadsPorChat.get(chat.id).get(threadId) ||
+                null;
+            threadsPorChat.get(chat.id).set(threadId, nomeTopico);
         }
     }
 
@@ -56,8 +73,18 @@ if (!TOKEN) {
             chat.username ||
             "(sem nome)";
         console.log(`  CHAT_ID=${chat.id}   [${chat.type}]  ${nome}`);
+
+        const threads = threadsPorChat.get(chat.id);
+        if (threads) {
+            for (const [threadId, nomeTopico] of threads) {
+                const rotulo = nomeTopico ? `   (tópico: ${nomeTopico})` : "";
+                console.log(`     └ MESSAGE_THREAD_ID=${threadId}${rotulo}`);
+            }
+        }
     }
     console.log("\nUse o id do grupo (negativo, geralmente -100...) como CHAT_ID.");
+    console.log("Para enviar num tópico, copie o MESSAGE_THREAD_ID dele");
+    console.log("(mande uma mensagem no tópico e rode este script de novo).");
 })().catch((err) => {
     console.error("Falha ao consultar getUpdates:", err.response?.data || err.message);
     process.exit(1);

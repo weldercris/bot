@@ -4,6 +4,7 @@
 const EMOJI_POR_STATUS = {
     "em testes": "🧪",
     "testes": "🧪",
+    "pendente staging": "🚧",
     "pronto para deploy": "✅",
     "pendente deploy": "📦",
     "publicado": "🙏🏻",
